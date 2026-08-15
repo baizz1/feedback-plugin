@@ -21,7 +21,15 @@
 
 ## 安装
 
-### 方式一：Windows 一键脚本（推荐）
+### 方式一：把仓库链接直接发给 AI（最省事）
+
+在 DeepSeek Harness（或任意带 shell 能力的 AI 会话）里发一句：
+
+> 帮我安装这个插件：https://github.com/baizz1/feedback-plugin （克隆后运行 install.ps1 和 verify.ps1，报告结果）
+
+AI 会自动：克隆仓库 → 运行 install.ps1（装 @playwright/mcp + 配 profile + 装技能）→ 运行 verify.ps1 六项自检 → 报告结果。装好后重启 DSH GUI，新开会话即可使用。
+
+### 方式二：Windows 一键脚本
 
 ```powershell
 ./install.ps1
@@ -32,7 +40,7 @@
 
 > 检查浏览器工具是否可用；打开 https://follow-class-reminder.pages.dev/learning-stage-feedback 并报告页面标题。
 
-### 方式二：手动安装
+### 方式三：手动安装
 
 - 技能：把 `skills/learning-stage-feedback/` 复制到 `%USERPROFILE%\.dsh\skills\`（用户级，所有会话可见）或工作区的 `.agents\skills\` / `.dsh\skills\`（项目级）。
 - 浏览器工具：全局安装 `@playwright/mcp`，并按 `profile-patch-snippet.yml` 在 DSH profile 的 `cordis.patch.yml` 注册 mcp-playwright（路径替换为本机实际路径；浏览器参数用 `chrome` 或 `chromium`）。
