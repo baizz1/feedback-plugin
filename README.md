@@ -68,6 +68,10 @@ AI 会自动：克隆仓库 → 运行 install.ps1（装 @playwright/mcp + 配 p
 
 **网站改版了怎么办？** 更新 `skills/learning-stage-feedback/SKILL.md`（重点：按钮名、模板机制、SQL 校验规则），无需重新安装工具。
 
+**条件句组和 SQL 查询怎么选？** 分两层：规则落在“平均水平”（如平均完课时长、平均出门测正确率）→ 用条件句组（均值分档，简单直观）；规则落在“任一天 / 任一行”（如任一天完课时长<100 即算未完成、出门测任一天缺测）→ 用 SQL 查询（`GROUP BY 学生ID HAVING COUNT/MIN 条件`，查询 0 行整行隐藏）。均值分档表达不了“任一天”语义，会漏判/误判。成套 6 条 SQL 模板见 `skills/learning-stage-feedback/resources/sql-templates.md`。
+
+**含 SQL 的模板保存报 400 `Code generation from strings disallowed for this context`？** 旧版网站服务端校验会执行一次 SQL，而 Cloudflare Pages 的 V8 运行时禁止 `new Function`，导致任何含 SQL 的模板都无法保存（客户端校验和预览正常）。站点源码已修复：`validateCustomTemplate` 增加 `executeSql` 选项，API 路由校验时跳过服务端执行（SQL 本就只在浏览器内对 Excel 行执行）。站点更新部署后即可正常保存；部署前可先用条件句组近似。
+
 **不用 DSH 的同事怎么用？** 把 `skills/learning-stage-feedback/resources/site-manual.md` 与 `sql-templates.md` 交给任意带浏览器的 AI（或当手册阅读）。
 
 ## License
