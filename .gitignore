@@ -1,0 +1,19 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Playwright
+.playwright-mcp/
+
+# Editor
+.vscode/
+.idea/
+
+# Temp
+*.tmp
+~*
