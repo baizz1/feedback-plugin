@@ -1,90 +1,45 @@
 # learning-stage-feedback plugin pack: one-shot installer (Windows PowerShell)
-# Does: 1) install @playwright/mcp; 2) write DSH profile MCP config; 3) install the skill
-# Usage: right-click -> Run with PowerShell, or in pwsh run ./install.ps1
+# Does: install the skill into the DSH user-level skills directory.
+# No Node.js, no browser, no Playwright required.
 $ErrorActionPreference = 'Stop'
 Write-Host '=== learning-stage-feedback plugin installer ==='
 
 function Fail($msg) { Write-Host ('[FAIL] ' + $msg) -ForegroundColor Red; exit 1 }
 
-# 1. Node.js
-$nodeCmd = Get-Command node -ErrorAction SilentlyContinue
-if (-not $nodeCmd) { Fail 'node not found: install Node.js 18+ and add it to PATH' }
-$nodePath = $nodeCmd.Source
-Write-Host ('[OK] node: ' + $nodePath)
-
-# 2. Global npm prefix and @playwright/mcp
-$prefixRaw = (npm prefix -g 2>$null | Select-Object -Last 1)
-if (-not $prefixRaw) { Fail 'npm unavailable' }
-$prefix = $prefixRaw.ToString().Trim()
-$cli = Join-Path $prefix 'node_modules\@playwright\mcp\cli.js'
-if (-not (Test-Path $cli)) {
-  Write-Host '[..] installing @playwright/mcp globally'
-  npm install -g @playwright/mcp
-  if (-not (Test-Path $cli)) { Fail '@playwright/mcp install failed' }
-}
-Write-Host ('[OK] @playwright/mcp: ' + $cli)
-
-# 3. Browser: prefer system Chrome, else download Chromium (~150MB)
-$chrome = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
-$chrome86 = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
-$browser = 'chrome'
-if (Test-Path $chrome) { Write-Host '[OK] using system Chrome' }
-elseif (Test-Path $chrome86) { Write-Host '[OK] using system Chrome (x86)' }
-else {
-  Write-Host '[..] Chrome not found, downloading Chromium (please wait)'
-  node $cli install chromium
-  if ($LASTEXITCODE -ne 0) { Fail 'Chromium download failed' }
-  $browser = 'chromium'
-  Write-Host '[OK] Chromium ready'
-}
-
-# 4. DSH profile config: merge mcp-playwright (idempotent)
-$dshHome = Join-Path $env:USERPROFILE '.dsh'
-$patchPath = Join-Path $dshHome 'profiles\web\cordis.patch.yml'
-if (-not (Test-Path $patchPath)) { $patchPath = Join-Path $dshHome 'cordis.patch.yml' }
-if (-not (Test-Path $patchPath)) {
-  $dir = Split-Path $patchPath -Parent
-  New-Item -ItemType Directory -Path $dir -Force | Out-Null
-  New-Item -ItemType File -Path $patchPath -Force | Out-Null
-}
-$patch = Get-Content $patchPath -Raw -ErrorAction SilentlyContinue
-$nodeUnix = $nodePath.Replace('\','/')
-$cliUnix = $cli.Replace('\','/')
-if ($patch -notmatch 'mcp-playwright') {
-  $snippet = @"
-
-# Playwright MCP: browser automation tools (mcp__playwright__browser_*).
-# Installed by the learning-stage-feedback plugin pack.
-- insert:
-    - id: mcp-playwright
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: playwright
-        transport: stdio
-        command: '$nodeUnix'
-        args:
-          - '$cliUnix'
-          - '--browser'
-          - '$browser'
-"@
-  Add-Content -Path $patchPath -Value $snippet -Encoding UTF8
-  Write-Host ('[OK] profile config written: ' + $patchPath)
-} else {
-  Write-Host '[OK] profile already has mcp-playwright (skipped)'
-}
-
-# 5. Install the skill to user-level skills dir
+# 1. Source skill
 $src = Join-Path $PSScriptRoot 'skills\learning-stage-feedback'
+if (-not (Test-Path (Join-Path $src 'SKILL.md'))) { Fail 'skill source not found; run this script from the plugin folder' }
+Write-Host ('[OK] skill source: ' + $src)
+
+# 2. DSH home
+$dshHome = Join-Path $env:USERPROFILE '.dsh'
+if (-not (Test-Path $dshHome)) { New-Item -ItemType Directory -Path $dshHome -Force | Out-Null }
+
+# 3. Install skill (overwrite old copy)
 $dst = Join-Path $dshHome 'skills\learning-stage-feedback'
 if (Test-Path $dst) { Remove-Item $dst -Recurse -Force }
 Copy-Item $src $dst -Recurse
 Write-Host ('[OK] skill installed: ' + $dst)
 
-# 6. Done
+# 4. Verify copied files
+$required = @(
+  (Join-Path $dst 'SKILL.md'),
+  (Join-Path $dst 'resources\api-reference.md'),
+  (Join-Path $dst 'resources\copywriting-guide.md'),
+  (Join-Path $dst 'resources\sql-templates.md'),
+  (Join-Path $dst 'resources\site-manual.md')
+)
+$missing = $required | Where-Object { -not (Test-Path $_) }
+if ($missing) { Fail ('missing installed files: ' + ($missing -join ', ')) }
+Write-Host '[OK] all skill files present'
+
+# 5. Done
 Write-Host ''
 Write-Host '=== install complete ==='
+Write-Host 'No browser or Playwright is needed.'
 Write-Host 'Next steps:'
 Write-Host '1. Restart the DSH GUI (unless hot reload picked it up).'
-Write-Host '2. Open a new session and send this test message:'
-Write-Host '   Check whether browser tools are available; open https://follow-class-reminder.pages.dev/learning-stage-feedback and report the page title.'
-Write-Host '3. Then just describe the template task; the skill loads automatically.'
+Write-Host '2. Run verify.ps1 to check the skill and the online template API.'
+Write-Host '3. Open a new session and send a request like:'
+Write-Host '   Help me create a parent feedback template for attendance and exit tests.'
+Write-Host '   The skill loads automatically.'

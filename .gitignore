@@ -7,9 +7,6 @@ npm-debug.log*
 Thumbs.db
 Desktop.ini
 
-# Playwright
-.playwright-mcp/
-
 # Editor
 .vscode/
 .idea/
