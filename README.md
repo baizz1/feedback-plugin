@@ -18,7 +18,10 @@
 | `install.sh` / `verify.sh` | macOS、Linux、WSL、Git Bash 的安装与自检脚本 |
 | `install.ps1` / `verify.ps1` | Windows PowerShell 的安装与自检脚本 |
 
-安装脚本只做一件事：**把 `skills/learning-stage-feedback` 目录复制到 DeepSeek Harness 的技能目录 `~/.dsh/skills/`**。不安装任何依赖。
+安装脚本只做一件事：**把 `skills/learning-stage-feedback` 目录复制到当前宿主的技能目录**，不安装任何依赖：
+
+- DeepSeek Harness：`~/.dsh/skills/learning-stage-feedback/`
+- WorkBuddy：`~/.workbuddy/skills/learning-stage-feedback/`
 
 ## 2. 工作原理
 
@@ -49,7 +52,7 @@ AI：  生成模板 JSON → POST/PUT 到网站模板 API → GET 回读核对
 > 帮我安装这个插件：https://github.com/baizz1/feedback-plugin
 > 安装完成后告诉我下一步怎么用。
 
-AI 会阅读本 README 的「给 AI 的安装协议」并自动完成下载、安装或打包、验证和汇报。装好后重启或新开会话即可使用。
+AI 会阅读本 README 的「给 AI 的安装协议」并自动完成下载、安装、验证和汇报，用户不需要手动上传任何文件。装好后重启或新开会话即可使用。
 
 ### 方式二：DeepSeek Harness + Windows PowerShell
 
@@ -67,16 +70,25 @@ bash verify.sh   # 所有项目应 PASS
 
 > 脚本支持 `DSH_HOME` 环境变量。默认安装到 `~/.dsh/skills/learning-stage-feedback`。
 
-### 方式四：WorkBuddy
+### 方式四：WorkBuddy（全自动，无需上传 zip）
 
-WorkBuddy 通过界面上传技能 zip：
+WorkBuddy 会扫描用户技能目录 `~/.workbuddy/skills/`，所以把技能文件夹复制进去即可：
 
-1. 下载本仓库并解压。
-2. 进入 `skills/learning-stage-feedback/`，把**该目录里的内容**打成 zip（zip 根目录必须是 `SKILL.md` 和 `resources/`，不要把整个仓库打进去）。
-3. WorkBuddy 打开「专家·技能·连接器」→「上传技能」→ 选择 zip。
-4. 上传后说「帮我做一个家长反馈模板」即可。
+macOS / Linux / WSL / Git Bash：
 
-更省事：直接把仓库链接发给 WorkBuddy，让它按下面的协议帮你打包。
+```bash
+bash install.sh --workbuddy
+bash verify.sh --workbuddy   # 所有项目应 PASS
+```
+
+Windows PowerShell：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Target WorkBuddy
+powershell -ExecutionPolicy Bypass -File .\verify.ps1 -Target WorkBuddy
+```
+
+更省事：直接把仓库链接发给 WorkBuddy，让它按下面的协议自动安装，用户全程不用手动上传文件。
 
 ### 方式五：手动安装（任意支持 SKILL.md 的宿主）
 
@@ -96,8 +108,8 @@ WorkBuddy 通过界面上传技能 zip：
 
 先判断用户用的是哪个宿主：
 
-- 用户说 DeepSeek Harness / DSH，或系统存在 `~/.dsh`、`%USERPROFILE%\.dsh` 目录 → 按 **4.3** 安装；
-- 用户说 WorkBuddy，或要求通过界面「上传技能」→ 按 **4.4** 打包；
+- 用户说 DeepSeek Harness / DSH，或系统存在 `~/.dsh`、`%USERPROFILE%\.dsh` 目录 → 按 **4.4** 安装；
+- 用户说 WorkBuddy，或系统存在 `~/.workbuddy`、`%USERPROFILE%\.workbuddy` 目录 → 按 **4.5** 直接安装；
 - 无法判断时，只问一句：「您用的是 DeepSeek Harness 还是 WorkBuddy？」不要猜。
 
 ### 4.3 第 1 步：获取仓库
@@ -122,16 +134,16 @@ unzip -q /tmp/feedback-plugin.zip -d /tmp
 
 ```bash
 cd /tmp/feedback-plugin   # 如果下载 zip 解压，则进入 feedback-plugin-master
-bash install.sh
-bash verify.sh
+bash install.sh --dsh
+bash verify.sh --dsh
 ```
 
 **Windows PowerShell：**
 
 ```powershell
 cd <仓库目录>
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-powershell -ExecutionPolicy Bypass -File .\verify.ps1
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Target DSH
+powershell -ExecutionPolicy Bypass -File .\verify.ps1 -Target DSH
 ```
 
 脚本成功标准：
@@ -145,47 +157,37 @@ powershell -ExecutionPolicy Bypass -File .\verify.ps1
 - macOS / Linux：把 `skills/learning-stage-feedback` 复制到 `~/.dsh/skills/`；
 - Windows：把同一目录复制到 `%USERPROFILE%\.dsh\skills\`。
 
-### 4.5 第 2 步：WorkBuddy 打包上传
+### 4.5 第 2 步：WorkBuddy 直接安装（无需 zip，无需用户手动上传）
 
-本仓库根目录不是技能目录，**不能把整个仓库 zip 上传**。只打包 `skills/learning-stage-feedback` 目录里的内容，确保解压后第一层就是 `SKILL.md`。
+WorkBuddy 的用户技能目录是 `~/.workbuddy/skills/`。直接把技能目录复制进去，WorkBuddy 重启或新开会话后即可扫描到。
 
-macOS / Linux（优先用 Python，避免 zip 未安装的问题）：
-
-```bash
-cd /tmp/feedback-plugin   # 或 feedback-plugin-master
-python3 - <<'PY'
-import pathlib, zipfile
-root = pathlib.Path("skills/learning-stage-feedback")
-out = pathlib.Path("learning-stage-feedback.workbuddy.zip")
-with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-    for f in root.rglob("*"):
-        if f.is_file():
-            z.write(f, f.relative_to(root))
-print(out.resolve())
-PY
-```
-
-有 zip 命令时也可以：
+**macOS / Linux / WSL / Git Bash：**
 
 ```bash
-cd skills/learning-stage-feedback
-zip -r ../../learning-stage-feedback.workbuddy.zip SKILL.md resources
+cd /tmp/feedback-plugin   # 如果下载 zip 解压，则进入 feedback-plugin-master
+bash install.sh --workbuddy
+bash verify.sh --workbuddy
 ```
 
-Windows PowerShell：
+**Windows PowerShell：**
 
 ```powershell
-cd <仓库目录>\skills\learning-stage-feedback
-Compress-Archive -Path SKILL.md, resources -DestinationPath ..\..\learning-stage-feedback.workbuddy.zip -Force
+cd <仓库目录>
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Target WorkBuddy
+powershell -ExecutionPolicy Bypass -File .\verify.ps1 -Target WorkBuddy
 ```
 
-打包完成后，把 zip 的绝对路径告诉用户，并给出操作步骤：
+**脚本不可用时的手动等效安装：**
 
-> 1. 打开 WorkBuddy，左侧进入「专家·技能·连接器」；
-> 2. 点击「上传技能」，选择 `learning-stage-feedback.workbuddy.zip`；
-> 3. 上传成功后，新开会话或直接说：「帮我做一个家长反馈模板」。
+- macOS / Linux：`mkdir -p ~/.workbuddy/skills && cp -R skills/learning-stage-feedback ~/.workbuddy/skills/`
+- Windows：把 `skills\learning-stage-feedback` 复制到 `%USERPROFILE%\.workbuddy\skills\`
 
-如果当前 WorkBuddy 环境本身支持读取本地技能目录，直接把 `skills/learning-stage-feedback` 复制到该目录；不确定就使用上传 zip 的路径。
+安装成功后告诉用户：
+
+> 插件已经装好了 ✅
+> 请重启一下 WorkBuddy（或新开一个会话），然后直接跟我说：「帮我做一个家长反馈模板」，我就能开始。
+
+如果 WorkBuddy 数据目录不在默认位置，shell 脚本可用 `WORKBUDDY_HOME` 环境变量指定后再安装。
 
 ### 4.6 第 3 步：通用验证
 
@@ -209,7 +211,7 @@ curl -fsS https://follow-class-reminder.pages.dev/api/learning-feedback/template
 ### 4.8 禁止事项
 
 - 禁止安装 Playwright、浏览器、MCP、npm 包——本插件不需要。
-- 禁止把整个仓库 zip 直接作为 WorkBuddy 技能上传。
+- 不要要求用户手动上传 zip；直接复制到宿主技能目录。
 - 禁止在非 Windows 系统上运行 `.ps1`；Windows 上优先 `.ps1`。
 - 不要修改 `skills/learning-stage-feedback` 里的任何文件后再安装；用户没有明确要求就不要改。
 - 安装阶段不要创建、修改或删除线上任何模板数据。
@@ -240,7 +242,7 @@ AI 会依次：问清需求 → 给话术确认稿 → 通过 API 写入线上�
 
 **Linux / macOS 能用吗？** 能。使用 `install.sh` 和 `verify.sh`；Windows 使用 `.ps1`。两者安装结果完全一样。
 
-**WorkBuddy 能直接用吗？** 能。技能本身是标准 `SKILL.md` 格式；按「方式四」或让 AI 按第 4 节打包上传即可。WorkBuddy 上传的 zip 根目录必须是 `SKILL.md`。
+**WorkBuddy 能直接用吗？** 能。技能本身是标准 `SKILL.md` 格式，WorkBuddy 会扫描 `~/.workbuddy/skills/`。把仓库链接发给 WorkBuddy，AI 会直接复制安装，不需要用户手动上传 zip。
 
 **网站改版了怎么办？** 若 API 路径或 JSON 结构变化，更新 `skills/learning-stage-feedback/resources/api-reference.md`；若话术偏好变化，更新 `copywriting-guide.md` 和 `SKILL.md`。无需重装工具。
 

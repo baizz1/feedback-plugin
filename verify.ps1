@@ -1,17 +1,40 @@
 # learning-stage-feedback plugin pack: self-check (Windows PowerShell)
 # Checks: PowerShell, skill files, HTTPS capability, online template API.
-Write-Host '=== learning-stage-feedback plugin self-check ==='
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File .\verify.ps1
+#   powershell -ExecutionPolicy Bypass -File .\verify.ps1 -Target DSH
+#   powershell -ExecutionPolicy Bypass -File .\verify.ps1 -Target WorkBuddy
+param(
+  [ValidateSet('Auto', 'DSH', 'WorkBuddy')]
+  [string]$Target = 'Auto'
+)
+
+Write-Host "=== learning-stage-feedback plugin self-check ($Target) ==="
 $script:ok = $true
 function Check($name, $cond, $detail) {
   if ($cond) { Write-Host ('[PASS] ' + $name + '  ' + $detail) }
   else { Write-Host ('[FAIL] ' + $name) -ForegroundColor Red; $script:ok = $false }
 }
 
+# 0. Choose host
+if ($Target -eq 'Auto') {
+  $dshExists = Test-Path (Join-Path $HOME '.dsh')
+  $wbExists = Test-Path (Join-Path $HOME '.workbuddy')
+  if ((-not $dshExists) -and $wbExists) { $Target = 'WorkBuddy' } else { $Target = 'DSH' }
+  Write-Host "[OK] host detected: $Target"
+}
+
 # 1. PowerShell
 Check 'PowerShell' ($PSVersionTable.PSVersion.Major -ge 5) ('PS ' + $PSVersionTable.PSVersion.ToString())
 
 # 2. Skill installed
-$skill = Join-Path $env:USERPROFILE '.dsh\skills\learning-stage-feedback\SKILL.md'
+if ($Target -eq 'WorkBuddy') {
+  $skillDir = Join-Path $HOME '.workbuddy\skills\learning-stage-feedback'
+} else {
+  $skillDir = Join-Path $HOME '.dsh\skills\learning-stage-feedback'
+}
+$skill = Join-Path $skillDir 'SKILL.md'
 Check 'skill SKILL.md' (Test-Path $skill) $skill
 
 $resources = @(
@@ -20,7 +43,6 @@ $resources = @(
   'resources\sql-templates.md',
   'resources\site-manual.md'
 )
-$skillDir = Split-Path $skill -Parent
 $missing = $resources | Where-Object { -not (Test-Path (Join-Path $skillDir $_)) }
 Check 'skill resources' ($missing.Count -eq 0) ('missing: ' + ($missing -join ', '))
 
@@ -49,8 +71,12 @@ Check 'online template API (GET)' $apiOk $detail
 
 Write-Host ''
 if ($script:ok) {
-  Write-Host 'All checks passed: restart DSH, open a new session, and describe the template you want.'
+  if ($Target -eq 'WorkBuddy') {
+    Write-Host 'All checks passed: restart WorkBuddy, open a new session, and describe the template you want.'
+  } else {
+    Write-Host 'All checks passed: restart DSH, open a new session, and describe the template you want.'
+  }
   Write-Host 'Example: Help me create a parent feedback template for attendance and exit tests.'
 } else {
-  Write-Host 'Some checks failed: run install.ps1, check the network, then re-run this check.'
+  Write-Host ("Some checks failed: run install.ps1 -Target $Target, check the network, then re-run this check.")
 }
