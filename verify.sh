@@ -42,7 +42,7 @@ else
 fi
 
 missing=""
-for file in resources/api-reference.md resources/copywriting-guide.md resources/preview-manifest.md resources/sql-templates.md resources/site-manual.md; do
+for file in resources/api-reference.md resources/copywriting-guide.md resources/sql-templates.md resources/site-manual.md; do
   if [ ! -f "$skill_dir/$file" ]; then
     missing="$missing $file"
   fi

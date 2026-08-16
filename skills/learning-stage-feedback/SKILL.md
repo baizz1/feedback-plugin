@@ -14,7 +14,6 @@ whenToUse: 用户提到学情阶段反馈、家长反馈、学生反馈、评语
 
 本技能默认**不需要浏览器**。写入模板使用 HTTPS API；验证渲染效果由老师在网站上完成，你负责给出清楚的验证方法。
 
-`resources/preview-manifest.md` 是**可选的 DeepSeek Harness 扩展协议**：只有当宿主是 DeepSeek Harness 且确认已启用 `ui-feedback-preview` 客户端插件时，才按它输出 `feedback-preview` 清单。其他宿主（WorkBuddy、Claude Code 等）忽略该文件，不要输出这个代码块。
 
 ## 1. 你的角色与相处方式
 
@@ -42,7 +41,6 @@ whenToUse: 用户提到学情阶段反馈、家长反馈、学生反馈、评语
 7. **模板是全员共享的**：线上模板库无个人隔离，保存即所有老师可见。话术里不要放具体学生姓名、联系方式等个人信息。
 8. **没有 shell 工具时降级**：如果本会话不能执行命令，不要假装写成功。改为输出「最终确认稿 + 浏览器手工操作步骤」或请用户开启 shell 工具后重试。
 9. **线上接口当前无需鉴权**，所以任何错误写入都会立即影响全体使用者。宁可多问一轮，不要抢跑。
-10. **预览清单仅限已启用 DSH 扩展的宿主**：只有同时满足「当前宿主是 DeepSeek Harness」和「已确认安装/启用 `ui-feedback-preview`」时，POST/PUT 成功并回读核对后才按 `resources/preview-manifest.md` 输出 `feedback-preview` 围栏代码块，覆盖模板全部分支、边界值和典型组合情况。无法确认是否启用时按未启用处理；其他 agent 宿主不要输出该代码块。修改模板后如需输出，必须重新生成完整清单。
 
 ## 3. 话术写作规范：像一位有温度的老师，不像 AI
 
@@ -276,7 +274,7 @@ POST/PUT 后再 GET 列表，核对：
 - 块数量、每段话术原文、SQL 原文与本地一致；
 - `updatedAt` 已更新。
 
-核对通过后，先判断宿主：确认是 DeepSeek Harness 且 `ui-feedback-preview` 已启用，才按 `resources/preview-manifest.md` 生成并输出 `feedback-preview` 清单；无法确认或不是 DSH 时跳过。清单用中文描述每个 case 的触发条件和预期完整评语，字段名、SQL、JSON schema 不要出现在清单正文里。
+核对通过后，本次写入才算完成。
 
 ### 6.5 第五步：迭代修改
 
@@ -300,11 +298,10 @@ curl.exe -s -X DELETE "https://follow-class-reminder.pages.dev/api/learning-feed
 
 ## 7. 交付与验证（没有浏览器时怎么做）
 
-写库成功不代表渲染正确。按以下方式交付。若已确认本会话是 DeepSeek Harness 且支持 `ui-feedback-preview`，先说明「消息下方已经生成评语情况看板，点开能查看所有分支」；其余宿主和未启用状态一律只给下面的网站验证步骤，不要额外解释 manifest。
+写库成功不代表渲染正确。按以下方式交付，只给网站验证步骤。
 
 ### 7.1 给老师的验证步骤（必须给出）
 
-> 0. 仅 DeepSeek Harness 且已启用扩展时：若消息下方出现「评语预览」卡片，先点开快速核对全部分支和边界值。
 > 1. 打开 https://follow-class-reminder.pages.dev/learning-stage-feedback
 > 2. 导入 Excel，进入反馈工作台
 > 3. 在反馈模板下拉框搜索「模板名」并选中
@@ -367,13 +364,11 @@ curl.exe -s -X DELETE "https://follow-class-reminder.pages.dev/api/learning-feed
 老师：可以，保存吧。
 
 你：（执行 6.1~6.4 的 GET 查重、POST、GET 回读）
-> 已经保存好了 ✅ 模板名「高一数学·阶段反馈·家长版」。消息下方如果有「评语预览」卡片，点开就能看到每种情况的评语；再打开网站，导入 Excel 后搜索这个模板就能用。建议先找三类学生看看：全勤且出门测全交的、任一天没到 100 分钟的、出门测有缺测的。哪句不合适直接发我，我马上改。
-> 若当前是 DeepSeek Harness 且已启用 `ui-feedback-preview`，同时按 `resources/preview-manifest.md` 输出 `feedback-preview` 清单；其他宿主跳过这一步。
+> 已经保存好了 ✅ 模板名「高一数学·阶段反馈·家长版」。打开网站，导入 Excel 后搜索这个模板就能用。建议先找三类学生看看：全勤且出门测全交的、任一天没到 100 分钟的、出门测有缺测的。哪句不合适直接发我，我马上改。
 
 ## 10. 资源索引
 
 - `resources/api-reference.md`：接口契约、完整 JSON 字段表、合法最小示例、PowerShell/curl/Python 调用示例。
-- `resources/preview-manifest.md`：**仅限 DeepSeek Harness + ui-feedback-preview 已启用时使用**的 `feedback-preview` 清单格式、覆盖要求和完整示例；其他宿主忽略。
 - `resources/copywriting-guide.md`：辅导老师话术手册，按场景给出可直接改写的高质量文案。
 - `resources/sql-templates.md`：已实测 SQL 模板库（出勤/出门测/课堂参与/四段式阶段反馈），直接复用。
 - `resources/site-manual.md`：网站功能手册，供老师验证和人工微调时对照。
