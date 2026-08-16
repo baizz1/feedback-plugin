@@ -12,6 +12,7 @@
 | `skills/learning-stage-feedback/resources/api-reference.md` | 模板 API 契约、完整 JSON 字段表、合法示例、错误处置 |
 | `skills/learning-stage-feedback/resources/copywriting-guide.md` | 话术写作手册：亲切、具体、有活人感，避免 AI 味 |
 | `skills/learning-stage-feedback/resources/sql-templates.md` | 已实测 SQL 模板库（出勤/出门测/课堂参与/四段式反馈） |
+| `skills/learning-stage-feedback/resources/preview-manifest.md` | **可选扩展协议**：仅 DeepSeek Harness 且已启用 `ui-feedback-preview` 时使用；其他宿主忽略 |
 | `skills/learning-stage-feedback/resources/site-manual.md` | 网站验证手册，指导老师验收模板效果 |
 | `install.sh` / `verify.sh` | macOS、Linux、WSL、Git Bash 的安装与自检脚本 |
 | `install.ps1` / `verify.ps1` | Windows PowerShell 的安装与自检脚本 |
@@ -31,6 +32,10 @@ AI：  追问对象、语气、规则（平均还是任一天、阈值、缺测�
 AI：  给出中文确认稿（每段话 + 什么时候出现），老师确认
         ↓
 AI：  生成模板 JSON → POST/PUT 到网站模板 API → GET 回读核对
+        ↓
+AI：  若宿主是 DeepSeek Harness 且扩展已启用 → 输出 `feedback-preview` 清单 → 渲染成评语情况看板
+        ↓
+其他 agent：不输出该清单，仍可正常使用网站验证
         ↓
 老师：打开网站 → 导入 Excel → 搜索模板名 → 直接使用
         ↓
@@ -72,6 +77,12 @@ bash verify.sh
 需要强制触发时，消息中写「使用 learning-stage-feedback 技能」+ 需求；DeepSeek Harness TUI 也可以用 `/skill:learning-stage-feedback 附加指令`。
 
 AI 会依次：问清需求 → 给话术确认稿 → 通过 API 写入线上模板库 → 回读核对 → 告诉你如何验证。后续修改只需说「把出门测那段的 85 改成 80」「总结句再短一点」，AI 会只改对应部分并更新同一条模板。
+
+## 4.1 宿主兼容性（重要）
+
+- 本插件核心技能与所有支持 skills 的 agent 兼容（DeepSeek Harness、WorkBuddy 等）。
+- `ui-feedback-preview` 是 **DeepSeek Harness 仓库里的客户端 UI 插件**，不属于本仓库；其他 agent 用户不会下载到任何 React/前端代码。
+- 随本仓库安装的 `resources/preview-manifest.md` 只是一个可选文本协议，且 SKILL 已要求：非 DeepSeek Harness 或未启用该扩展时不得输出 `feedback-preview` 代码块。它不影响其他宿主的工作流。
 
 ## 5. 常见问题
 

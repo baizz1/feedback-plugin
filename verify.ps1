@@ -40,6 +40,7 @@ Check 'skill SKILL.md' (Test-Path $skill) $skill
 $resources = @(
   'resources\api-reference.md',
   'resources\copywriting-guide.md',
+  'resources\preview-manifest.md',
   'resources\sql-templates.md',
   'resources\site-manual.md'
 )

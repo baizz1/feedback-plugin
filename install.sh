@@ -48,7 +48,7 @@ mkdir -p "$(dirname "$dst")"
 cp -R "$src" "$dst"
 echo "[OK] skill installed: $dst"
 
-required="SKILL.md resources/api-reference.md resources/copywriting-guide.md resources/sql-templates.md resources/site-manual.md"
+required="SKILL.md resources/api-reference.md resources/copywriting-guide.md resources/preview-manifest.md resources/sql-templates.md resources/site-manual.md"
 missing=""
 for file in $required; do
   if [ ! -f "$dst/$file" ]; then

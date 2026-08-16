@@ -47,6 +47,7 @@ $required = @(
   (Join-Path $dst 'SKILL.md'),
   (Join-Path $dst 'resources\api-reference.md'),
   (Join-Path $dst 'resources\copywriting-guide.md'),
+  (Join-Path $dst 'resources\preview-manifest.md'),
   (Join-Path $dst 'resources\sql-templates.md'),
   (Join-Path $dst 'resources\site-manual.md')
 )
